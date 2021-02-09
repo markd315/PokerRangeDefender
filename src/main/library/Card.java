@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 /*
  * need to put in compareto and 
  * this object will mostly be created within Deck.java
@@ -35,7 +35,7 @@ public class Card implements Comparable<Card> {
 				return C;
 			}
 		};
-		private int value;
+		public int value;
 
 		public Suit next() {
 			return values()[ordinal() +1];
@@ -107,13 +107,13 @@ public class Card implements Comparable<Card> {
 		};
 		
 		
-		private int value;
+		public int value;
 		
 		public Rank next() {
 			return values()[ordinal() +1];
 		}
 		
-		private Rank (int value) {
+		Rank(int value) {
 			this.value = value;
 		}
 		
@@ -162,7 +162,7 @@ public class Card implements Comparable<Card> {
 		}
 		
 		
-		char getChar() {
+		public char getChar() {
 			char c = ' ';
 			switch (value) {
 			case 2: c = '2';break;
@@ -330,7 +330,7 @@ public class Card implements Comparable<Card> {
 		
 	}
 	
-	char getRank() {
+	public char getRank() {
 		return rank.getChar();
 	}
 	

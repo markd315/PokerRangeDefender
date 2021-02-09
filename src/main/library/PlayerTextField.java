@@ -1,6 +1,4 @@
-package pokerTools;
-
-import java.util.ArrayList;
+package library;
 
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;

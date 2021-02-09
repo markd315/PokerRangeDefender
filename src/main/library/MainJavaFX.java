@@ -1,36 +1,21 @@
-package pokerTools;
-
-import java.util.ArrayList;
+package library;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TitledPane;
+import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import pokerTools.PokerHandKeyboard.KBType;
+
+import java.util.ArrayList;
 
 public class MainJavaFX extends Application implements EquityCalcObserver {
 
@@ -151,14 +136,14 @@ public class MainJavaFX extends Application implements EquityCalcObserver {
 		boardTextField.focusedProperty().addListener(e -> {
 			if (boardTextField.isFocused()) {
 				boardTextField.setKeyboard(pokerHandKeyboard);
-				pokerHandKeyboard.setCardTextField(boardTextField, KBType.ONLYCARDS);
+				pokerHandKeyboard.setCardTextField(boardTextField, PokerHandKeyboard.KBType.ONLYCARDS);
 				setSelectedBoardRow(boardTextField);
 			}
 		});
 		deadTextField.focusedProperty().addListener(e -> {
 			if (deadTextField.isFocused()) {
 				deadTextField.setKeyboard(pokerHandKeyboard);
-				pokerHandKeyboard.setCardTextField(deadTextField, KBType.ONLYCARDS);
+				pokerHandKeyboard.setCardTextField(deadTextField, PokerHandKeyboard.KBType.ONLYCARDS);
 				setSelectedBoardRow(deadTextField);
 			}
 		});
@@ -423,7 +408,7 @@ public class MainJavaFX extends Application implements EquityCalcObserver {
 		playerTextField.focusedProperty().addListener(e -> {
 			if (playerTextField.isFocused()) {
 				playerTextField.setKeyboard(pokerHandKeyboard);
-				pokerHandKeyboard.setPlayerTextField(playerTextField, KBType.RANGES);
+				pokerHandKeyboard.setPlayerTextField(playerTextField, PokerHandKeyboard.KBType.RANGES);
 			}
 			setSelectedPlayerRow(playerTextField);
 		});

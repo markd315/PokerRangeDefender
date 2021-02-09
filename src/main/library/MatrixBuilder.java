@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -9,7 +9,6 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.TreeMap;
 
 public class MatrixBuilder implements EquityCalcObserver {
 	EquityCalc equityCalc;
@@ -105,7 +104,7 @@ public class MatrixBuilder implements EquityCalcObserver {
 						//results[1][0] = results[1][1] =results[1][2]= 0;
 						//end count matchups
 						System.out.print(Integer.toBinaryString(pockets[0][0].normalizeMatchupBits(pockets[1][0])) + " " + pockets[0][0].normalizeMatchup(pockets[1][0]));
-						System.out.println(pockets[0][0].getString() + " vs " + pockets[1][0].getString() + " " + results[0][0] + " " + results[1][0] + " " + results[0][1] + " " + results[1][1] + " numgames: " + results[0][2]);
+						System.out.println(pockets[0][0].toString() + " vs " + pockets[1][0].toString() + " " + results[0][0] + " " + results[1][0] + " " + results[0][1] + " " + results[1][1] + " numgames: " + results[0][2]);
 						matchups++;
 						matchupResults = new long[3];
 						if(pockets[0][0].getNum() > pockets[1][0].getNum()) {
@@ -286,7 +285,7 @@ public class MatrixBuilder implements EquityCalcObserver {
 						pockets[1][0] = new Pocket(new Card(two1,twos1),new Card(two2,twos2));
 						long[][] results = equityCalc.calcEnum(pockets);
 						System.out.println(Integer.toBinaryString(pockets[0][0].normalizeMatchupBits(pockets[1][0])));
-						System.out.println(pockets[0][0].getString() + " vs " + pockets[1][0].getString() + " " + results[0][0] + " " + results[1][0] + " " + results[0][1] + " " + results[1][1] + " numgames: " + results[0][2]);
+						System.out.println(pockets[0][0].toString() + " vs " + pockets[1][0].toString() + " " + results[0][0] + " " + results[1][0] + " " + results[0][1] + " " + results[1][1] + " numgames: " + results[0][2]);
 						matchups++; 
 						resultsList1.add(results[0][0]);
 						resultsList2.add(results[1][0]);

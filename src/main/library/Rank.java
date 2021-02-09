@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 /* the advantage of having Rank and Suit enums seperate is simply less typing? 
  * Is that worth the extra class file?
  * 

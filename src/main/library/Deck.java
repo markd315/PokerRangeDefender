@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.Math;

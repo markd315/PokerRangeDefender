@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 import java.io.FileInputStream;
 import java.io.IOException;

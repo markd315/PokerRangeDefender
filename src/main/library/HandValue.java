@@ -1,19 +1,27 @@
-package pokerTools;
+package library;
 
-/*
- * Bugs:   kicker problems on single pair hands: AsAsJh4sKs == AsAsQcKd8h, AsAs7cKd5h == AsAs3sKc2h
+/* TODO:
+ * 
+ * Optimization:
+ * Find any local variables and move to instance.
+ * 
  */
 
-/* This class is meant to return a unique integer based on the 1-5 card hand value
+
+/** This class is meant to return a unique integer based on the 1-5 card hand value
 	 * of any number of cards passed to it. If you send it a whole deck, you'll get 
 	 * the value for a Royal Flush. If you send it 1 duece, you'll get the value of 0
-	 * It assumes it will not get duplicates though.
-	 * The test for duplicate cards should be done before passing cards here.
+	 * It assumes it will not get duplicates or you know what you are doing in passing
+	 * them. If you send Ac Ac Kc Kc Kc, you get a full house.
 	 * 
 	 * Meant to be used as a static class, since it is only a single integer value that
 	 * this class produces
 	 * later modifications however might have it returning an array of the cards that 
 	 * make the best hand
+	 * 
+	 * Many of the ideas in this class were taken from Andrew Prock's work:
+	 * https://github.com/andrewprock
+	 * 
 	 */
 public class HandValue {
 	private static Card[] cards; 	//breaks down the cards we are passed into this array
@@ -30,15 +38,15 @@ public class HandValue {
 	private static final int[] VALMUL = {1,14,196,2744,38416};
 	// hand multiples -- these are used to set the rankings of the hand strength
 	// these are set to millions so the 5 card high hand will never overtake one of these
-	private static final int RANKMUL = 			1000000; 
-	private static final int FLUSHMUL = 		6*RANKMUL;
-	private static final int STRAIGHTMUL = 		5*RANKMUL;
-	private static final int STRAIGHTFLUSHMUL =	10*RANKMUL; //just cause a Royal should be 10 :D
-	private static final int TRIPSMUL = 		4*RANKMUL;
-	private static final int BOATMUL = 			7*RANKMUL;
-	private static final int QUADSMUL = 		8*RANKMUL;
-	private static final int TWOPAIRMUL = 		3*RANKMUL;
-	private static final int ONEPAIRMUL = 		2*RANKMUL;
+	private static final int RANKMUL = 			1000000;
+    public static final int STRAIGHTFLUSHMUL =	10*RANKMUL; //just cause a Royal should be 10 :D
+    public static final int QUADSMUL = 		8*RANKMUL;
+    public static final int BOATMUL = 			7*RANKMUL;
+    public static final int FLUSHMUL = 		6*RANKMUL;
+    public static final int STRAIGHTMUL = 		5*RANKMUL;
+    public static final int TRIPSMUL = 		4*RANKMUL;
+    public static final int TWOPAIRMUL = 		3*RANKMUL;
+    public static final int ONEPAIRMUL = 		2*RANKMUL;
 	
 	private static int handStringFormat = 0;
 	//Sets the method of hand String
@@ -77,7 +85,7 @@ public class HandValue {
 	 * The main way to send the cards will be an array of Card objects
 	 * Alternative ways will be a string
 	 */
-	public static int getHandValue(Card[] c) {
+	public static int getHandValue(Card... c) {
 		reset();
 		cards = c;
 		/* debug
@@ -87,13 +95,20 @@ public class HandValue {
 		return findHandValue();
 	}
 	
+	public static int getHandValueNoFlush(Card... c) {
+		reset();
+		cards = c;
+		return findHandValueNoFlush();
+	}
+	
 	/* findHandValue() will be run after we have a proper array of Card objects
 	 * It will delegate the setting of the bit maps and then the logic to find the 
 	 * value which will be returned to the calling method (usually getHandValue())
 	 * 
 	 */
+	static int value=0,testValue=0; //variables placed outside to avoid instantiation
 	private static int findHandValue() {
-		int value=0,testValue=0;
+		value=0;testValue=0;
 		setMaps();
 		if(debug) debug();
 		if ((value = isFlush()) > STRAIGHTFLUSHMUL) return value; //if we have a straight flush, we are done
@@ -104,6 +119,24 @@ public class HandValue {
 		//if we make it here, we must have a high hand
 		if (debug) debug();
 		return findHighCardValue(singleRanksMap,5);
+	}
+	
+	/**
+	 * Meant to act the same as findHandValue() but this method assumes the caller already knows there are no flushes possible
+	 * @return
+	 */
+	private static int findHandValueNoFlush() {
+		value=0;testValue=0;
+		setMapsNoFlush();
+		if(debug) debug();
+		if ((value = isPairToQuads())>BOATMUL) return value; //if we have a boat or better, we are done 
+		//next lines might be a touch confusing... it's meant to save cycles, doing the straight calc is not always necessary
+		if ((value < STRAIGHTMUL) && ((testValue = isStraight(singleRanksMap)) > 0) && ( (testValue+=STRAIGHTMUL) > value) ) value = testValue; //First test is to save some cycles 
+		if (value >= ONEPAIRMUL) return value;
+		//if we make it here, we must have a high hand
+		if (debug) debug();
+		return findHighCardValue(singleRanksMap,5);
+
 	}
 	
 	public static String getHandString(int value) {
@@ -146,27 +179,37 @@ public class HandValue {
 		for (int c = 0; c<cards.length; c++) {
 			switch (cards[c].getSuit()){
 			case 'c':  //clubs
-				clubsMap |= (1 << cards[c].getRankBit());
+				clubsMap |= cards[c].getSingleRanksMap();
 				numClubs++;
 				break;
 			case 'd': // diamonds
-				diamondsMap |= (1 << cards[c].getRankBit());
+				diamondsMap |= cards[c].getSingleRanksMap();
 				numDiamonds++;
 				break;
 			case 'h': // hearts 
-				heartsMap |= (1 << cards[c].getRankBit());
+				heartsMap |= cards[c].getSingleRanksMap();
 				numHearts++;
 				break;
 			case 's':  //spades
-				spadesMap |= (1 << cards[c].getRankBit());
+				spadesMap |= cards[c].getSingleRanksMap();
 				numSpades++;
 				break;
 			}
-			ranksMap += (1L << (cards[c].getRankBit()*3));			
+			ranksMap += cards[c].getRankMap();			
 		}
 		// set the singles map by using the suits maps
 		singleRanksMap = clubsMap | diamondsMap | heartsMap | spadesMap;
 		
+	}
+	
+	/**
+	 * Does not set the suits map or suits count. 
+	 */
+	private static void setMapsNoFlush() {
+		for (int c = 0; c<cards.length;c++) {
+			singleRanksMap |= cards[c].getSingleRanksMap();
+			ranksMap += cards[c].getRankMap();
+		}
 	}
 	
 	/**
@@ -181,15 +224,16 @@ public class HandValue {
 	 * 
 	 * overloaded when we are finding all 5
 	 */
+	static int hcValue;
 	private static int findHighCardValue(long map,int num,int numReduce) {
-		int value=0;
+		hcValue=0;
 		//start at the 13th bit and count down, decreasing num, mulIndex determines where in VALMUL we pull
 		int mulIndex = VALMUL.length-1-numReduce;
 		//assert (numReduce+num > VALMUL.length) : "numReduce blowup";
 		for (int c = 12;c>=0 && num>0;c--) {
-			if ((map & (1<<c)) != 0) {value += (c+1)*VALMUL[mulIndex]; mulIndex--;num--; }
+			if ((map & (1<<c)) != 0) {hcValue += (c+1)*VALMUL[mulIndex]; mulIndex--;num--; }
 		}
-		return value;
+		return hcValue;
 	}
 	
 	/** See  findHighCardValue(long map,int num,int numReduce) */

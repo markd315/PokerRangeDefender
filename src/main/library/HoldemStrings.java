@@ -1,9 +1,10 @@
-package pokerTools;
+package library;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.*;
+
+import static ranges.Range.removeBoard;
 
 
 /*
@@ -92,6 +93,13 @@ public class HoldemStrings {
 		pocket = handsArray.toArray(pocket);
 		return pocket;
 	}
+
+    public static Pocket[] pocketsToArray(String s, Card[] board) {
+        Pocket[] temp = pocketsToArray(s);
+        Set<Pocket> tmp = new HashSet<>(Arrays.asList(temp));
+        Set<Card> bard = new HashSet<>(Arrays.asList(board));
+        return removeBoard(tmp, bard).toArray(new Pocket[0]);
+    }
 	
 	public static ArrayList<Pocket> pocketsToArrayList(String cardString) {
 		/*
@@ -339,7 +347,7 @@ public class HoldemStrings {
 		ArrayList<String> specifics;
 		ArrayList<String> foundRanges = new ArrayList<String>();
 		String found = new String(); //used inside the loops
-		
+
 		//First, normalize the capitalization
 		cardString = normalizeCaps(cardString);
 		

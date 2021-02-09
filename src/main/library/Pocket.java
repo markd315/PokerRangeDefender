@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 /*
  * This class will represent a Hold'em player's two pocket cards.
@@ -68,8 +68,9 @@ public class Pocket implements Comparable<Pocket> {
 		}
 		return num;
 	}
-	
-	public String getString() {
+
+	@Override
+	public String toString() {
 		String p;
 		p = one.getCardStr() + two.getCardStr();
 		return p;

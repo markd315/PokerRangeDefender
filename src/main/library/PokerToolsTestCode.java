@@ -1,11 +1,8 @@
-package pokerTools;
+package library;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class PokerToolsTestCode implements EquityCalcObserver {
@@ -23,7 +20,7 @@ public class PokerToolsTestCode implements EquityCalcObserver {
 		//testMatrixBuilder();
 		//testPreFlopOddsMatrix();
 		//buildMatrixHash();
-		//buildHandsHash();
+		buildHandsHash();
 		//testFuckOff();
 		//testIsoThing();
 		//testDeck();
@@ -245,8 +242,8 @@ public class PokerToolsTestCode implements EquityCalcObserver {
 		
 		if (map == new Pocket("QcQd").normalizeMatchupBits(new Pocket("KhAs"))) {
 			System.out.println("yeppers");
-			System.out.println("Num: " + pocket1.getString() + " " + pocket1.getNum());
-			System.out.println("Num: " + pocket2.getString() + " " + pocket2.getNum());
+			System.out.println("Num: " + pocket1.toString() + " " + pocket1.getNum());
+			System.out.println("Num: " + pocket2.toString() + " " + pocket2.getNum());
 		}
 	}
 	
@@ -512,7 +509,7 @@ public class PokerToolsTestCode implements EquityCalcObserver {
 		
 		System.out.println("Size of array: " + testPocketArray.length);
 		for (Pocket p : testPocketArray) {
-			System.out.print (p.getString());
+			System.out.print (p.toString());
 			System.out.print(" " + p.hashCode() + "\n");
 		
 		}

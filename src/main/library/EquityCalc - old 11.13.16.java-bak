@@ -92,7 +92,7 @@ public class EquityCalc {
 	
 
 	/**
-	 * The main method of this class. The purpose of this method is to determine an equity percentage of a Holdem Hand or range versus another 
+	 * The cli method of this class. The purpose of this method is to determine an equity percentage of a Holdem Hand or range versus another
 	 * Holdem Hand or range. For example, if a player has JJ and is unsure of his opponents holdings but is pretty sure it contants all pairs
 	 * above 99, all AKs, and all AQs, the known JJ hand (JsJh) will be passed as pockets[0][0]. The opponents range will then be passed 
 	 * into pockets[1][...] which would be a possible 68 total hands: 9h9d 9s9d.... AsAh.
@@ -164,7 +164,7 @@ public class EquityCalc {
 			deck.setDeck();
 			for (int c = 0; c < pockets.length; c++) {
 				if (!removeFromDeck(pockets[c][iterator[c]].getCards())) {
-					continue top;  // if we found a duplicate card, it's ok, we just start main loop over and choose new combo
+					continue top;  // if we found a duplicate card, it's ok, we just start cli loop over and choose new combo
 				}
 			}
 			
@@ -218,8 +218,6 @@ public class EquityCalc {
 			int deckL = cardArray.length;
 			int cc=0; //cc manages deckIterator, ii manages cardArray 
 			int ii=0; // variables to build combos into deckIterator
-			int handValue[] = new int[pockets.length];
-			boolean tie;
 			
 			while (cc>=0 && !resultsObserver.checkStop())  
 			{
@@ -236,13 +234,11 @@ public class EquityCalc {
 						for (int c=0;c<comboL;c++){
 							comboArray[c] = cardArray[deckIterator[c]];
 						}
-						//TODO: There is optimization here somewhere by removing the above reference changes
-						//somehow have to pass the cardArray[deckIterator[c]] directly to handvalue without using comboArray
 						
 						//Find values for each hand
 						bestValue=0;
-						tie = false;
-
+						boolean tie = false;
+						int handValue[] = new int[pockets.length];
 						for (int c=0;c<pockets.length;c++) {
 							if((handValue[c]=findHandValue(pockets[c][iterator[c]],board,comboArray))>bestValue) {
 								bestValue = handValue[c]; tie = false;
@@ -335,23 +331,8 @@ public class EquityCalc {
 	 * @param combo
 	 * @return Hand value from HandValue static class
 	 */
-	private int findHandValue(Pocket pocket,Card[] board,Card... combo) {
-		
-		if (board.length + combo.length != 5)  // TODO: extra calc, remove
-			throw new IllegalArgumentException ("Problem in findHandValue.");
-		
-		switch (board.length) { //must be seperated, cannot create new array for speed reasons, (differences seems negligible after tests)
-		case 0: return HandValue.getHandValue(pocket.getCard(0),pocket.getCard(1),combo[0],combo[1],combo[2],combo[3],combo[4]);
-		case 1: return HandValue.getHandValue(pocket.getCard(0),pocket.getCard(1),board[0],combo[0],combo[1],combo[2],combo[3]);
-		case 2: return HandValue.getHandValue(pocket.getCard(0),pocket.getCard(1),board[0],board[1],combo[0],combo[1],combo[2]);
-		case 3: return HandValue.getHandValue(pocket.getCard(0),pocket.getCard(1),board[0],board[1],board[2],combo[0],combo[1]);
-		case 4: return HandValue.getHandValue(pocket.getCard(0),pocket.getCard(1),board[0],board[1],board[2],board[3],combo[0]);
-		case 5: return HandValue.getHandValue(pocket.getCard(0),pocket.getCard(1),board[0],board[1],board[2],board[3],board[4]);
-		default: throw new IllegalArgumentException("bad data findHandValue: equityCalc");
-		}
-		
-		//old code, removed the extra array creation
-		/*Card[] cards = new Card[(2 + board.length + combo.length)];
+	private int findHandValue(Pocket pocket,Card[] board,Card[] combo) {
+		Card[] cards = new Card[(2 + board.length + combo.length)];
 		cards[0] = pocket.getCard(0);
 		cards[1] = pocket.getCard(1);
 		int cardsIndex = 2;
@@ -368,7 +349,7 @@ public class EquityCalc {
 			int value = HandValue.getHandValue(cards);
 			return value;
 			}
-		else return -1;*/
+		else return -1;
 	}
 	
 	/**

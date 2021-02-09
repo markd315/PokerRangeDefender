@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 /*
  * Panel fits inside of MainGUI
@@ -13,15 +13,12 @@ package pokerTools;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
-import java.util.ArrayList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.border.BevelBorder;
-import javax.swing.border.Border;
 
 import java.awt.FlowLayout;
 import java.awt.BorderLayout;
-import javax.swing.BoxLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import javax.swing.border.LineBorder;
@@ -31,10 +28,6 @@ import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.SoftBevelBorder;
-import java.awt.Component;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
 
 public class EvaluatorPanel extends JPanel implements EquityCalcObserver {
 	/**

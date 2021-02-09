@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 public interface EquityCalcObserver {
 

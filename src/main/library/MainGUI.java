@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 /*
  * Main Frame for PokerTools software. The panel is switched out for the different tools. 
@@ -19,28 +19,10 @@ package pokerTools;
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import java.awt.BorderLayout;
-import java.awt.EventQueue;
-
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import javax.swing.JMenuBar;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.BoxLayout;
 import javax.swing.UIManager.*;
-import java.awt.GridLayout;
-import javax.swing.SwingConstants;
 import javax.swing.UIManager;
-
-import java.awt.Font;
-import javax.swing.border.BevelBorder;
-import javax.swing.JButton;
-import java.awt.FlowLayout;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 
 public class MainGUI extends JFrame {
 

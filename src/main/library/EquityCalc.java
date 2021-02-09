@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 /* Copyright 2018 Nathan Dunn
  * 
@@ -16,7 +16,7 @@ package pokerTools;
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *  */
 
-import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *  Robust class should be designed to be easily portable.
@@ -72,7 +72,7 @@ public class EquityCalc {
 	 * @param dead Any dead cards
 	 * @return long The number of expected calculations in an enumeration
 	 */
-	public long numCalcsEnum(Pocket pockets[][], Card board[], Card dead[]) { 
+	public long numCalcsEnum(Pocket pockets[][], Card board[], Card dead[]) {
 		/* Don't pass null if board or dead are empty.  Pass an empty array.
 		 * Alternatively, there are overloaded functions numCalcsEnum(Pocket pockets[][]) ...
 		 * 
@@ -130,7 +130,7 @@ public class EquityCalc {
 		}
 		
 		deckSize -= (board.length + dead.length + pockets.length*2);
-		System.out.println(numCalcs);
+		//System.out.println(numCalcs);
 		if(board.length == 0) { //preflop
 			numCalcs *= combinations(deckSize,5);
 		}
@@ -140,7 +140,7 @@ public class EquityCalc {
 		else if(board.length == 4) { //turn
 			numCalcs *= deckSize;
 		}
-		else return 0L; // river?  lol
+		else return 1L; // river?  lol
 		
 		if (numCalcs > Long.MAX_VALUE) return Long.MAX_VALUE;
 		else return (long) numCalcs;
@@ -172,10 +172,20 @@ public class EquityCalc {
 	 * The JJ hand would be tested against all the 68 hands (over 1.7 million games per matchup), and the final number of wins for each
 	 * would be returned. It will also update the progress on the enumeration through the EquityCalcObserver interface.
 	 * @param pockets[][] Pocket class that represents a preflop Holdem hand.
-	 * @param board[] Card class for the cards on the board 
+	 * @param board[] Card class for the cards on the board
 	 * @param dead[] Any dead cards that should be excluded
 	 * @return Each player's wins, ties, and the number of games For example: [0][0] wins [0][1] ties [0][2] number of games (number of games should be same for every player
 	 */
+    public double[] eqPercents(Pocket[][] pocketsP, Card[] boardB, Card[] deadD){
+	    long[][] res = calcEnum(pocketsP, boardB, deadD);
+	    double[] ret = new double[res.length];
+	    for(int i = 0; i<res.length; i++){
+	        long[] arr = res[i];
+            ret[i] = (arr[0] + arr[1]*0.5) / arr[2] * 100.0;
+        }
+	    return ret;
+    }
+
 	long [][]calcEnum(Pocket pocketsP[][], Card boardB[], Card deadD[]) {
 		//debug
 		//set instance from arguments
@@ -186,7 +196,6 @@ public class EquityCalc {
 		numWins = new long[pockets.length]; numTies = new long[pockets.length];
 		numGames=0;
 		deck = new Deck();
-		
 		totalNumGames = numCalcsEnum(pockets,board,dead); //totaNumGames used to update progress for observers
 
 		if (pockets.length < 2) {
@@ -256,7 +265,50 @@ public class EquityCalc {
 			
 			if (board.length == 0) {  //if we are preflop, we loop looking for like boards
 				doPreflopEnum();
-			} else {
+
+			} else if(board.length == 5){ //River, just evaluate best hand no brute forcing
+                handValue = new int[pockets.length];
+                for(int i=0; i<pocketsP.length; i++){
+                    int games = 0, wins = 0, ties = 0;
+                    Pocket[] range = pocketsP[i], opponent;
+                    if(pocketsP.length > 2){
+                        throw new Error("multiway river!");
+                    }
+                    if(i==0){
+                        opponent = pocketsP[1];
+                    }else {
+                        opponent = pocketsP[0];
+                    }
+                    for(Pocket p : range){
+                        Card[] myHand = {p.getCard(0), p.getCard(1), board[0], board[1], board[2], board[3], board[4]};
+                        int myHandValue = HandValue.getHandValue(myHand);
+                        //Only solving rivers heads up for now..
+                        for(Pocket o : opponent){
+                            Card[] theirHand = {o.getCard(0), o.getCard(1), board[0], board[1], board[2], board[3], board[4]};
+                            int theirHandValue = HandValue.getHandValue(theirHand);
+                            games++;
+                            if(myHandValue > theirHandValue){
+                                wins++;
+                            }
+                            else if(myHandValue == theirHandValue){
+                                ties++;
+                            }
+                        }
+                    }
+                    numWins[i] = wins;
+                    numTies[i] = ties;
+                    numGames = games;
+                }
+                // create a 3d array to return
+                long[][] returnResults = new long[pockets.length][3];
+                for (int c = 0; c<pockets.length;c++) {
+                    returnResults[c][0] = numWins[c];
+                    returnResults[c][1] = numTies[c];
+                    returnResults[c][2] = numGames;
+                }
+                return returnResults;
+             }
+			    else{
 				doBruteForceEnum();
 			}
 			
@@ -314,7 +366,7 @@ public class EquityCalc {
 			if (hasS == false && pockets[cc][iterator[cc]].hasSuit(Card.Suit.S)) hasS = true;
 		}
 		
-		for (it[0] = Card.Rank.TWO;it[0]!=null && !resultsObserver.checkStop();it[0] = it[0].next()) {
+		for (it[0] = Card.Rank.TWO; it[0]!=null && !resultsObserver.checkStop(); it[0] = it[0].next()) {
 			for (it[1] = it[0];it[1] !=null;it[1] = it[1].next()) {
 				for (it[2] = it[1]; it[2] !=null; it[2] = it[2].next()) {
 					for (it[3] = it[2]; it[3] != null; it[3] = it[3].next()) {
@@ -346,9 +398,9 @@ public class EquityCalc {
 								// easy, just move the off-flush card for each suit
 								for (Card.Suit s : Card.Suit.values()) {
 									if (s == Card.Suit.C && hasC ==false) continue; //no need to loop if no suited cards in this suit
-									else if(s==Card.Suit.D && hasD==false) continue;
-									else if(s==Card.Suit.H && hasH==false) continue;
-									else if(s==Card.Suit.S && hasS==false) continue;
+									else if(s== Card.Suit.D && hasD==false) continue;
+									else if(s== Card.Suit.H && hasH==false) continue;
+									else if(s== Card.Suit.S && hasS==false) continue;
 									
 
 									for (cc=0; cc<5; cc++) { //moving off card
@@ -381,9 +433,9 @@ public class EquityCalc {
 								//will need a nested loop to move the suited cards
 								for (Card.Suit s: Card.Suit.values()) {
 									if (s == Card.Suit.C && suitedC==false) continue; //no need to loop if no suited cards in this suit
-									else if(s==Card.Suit.D && suitedD==false) continue;
-									else if(s==Card.Suit.H && suitedH==false) continue;
-									else if(s==Card.Suit.S && suitedS==false) continue;
+									else if(s== Card.Suit.D && suitedD==false) continue;
+									else if(s== Card.Suit.H && suitedH==false) continue;
+									else if(s== Card.Suit.S && suitedS==false) continue;
 									
 									for (c=0;c<5;c++) {
 										for (cc=c+1;cc<5;cc++) {
@@ -418,7 +470,7 @@ public class EquityCalc {
 								//end debug
 								
 								//Do end. Here we can just pick specific cards and send the leftover newGames
-								doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0],Card.Suit.C),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.D),fullDeck.pickSpecificCard(rankValues[2],Card.Suit.H),fullDeck.pickSpecificCard(rankValues[3],Card.Suit.S),fullDeck.pickSpecificCard(rankValues[4],Card.Suit.C));
+								doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0], Card.Suit.C),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.D),fullDeck.pickSpecificCard(rankValues[2], Card.Suit.H),fullDeck.pickSpecificCard(rankValues[3], Card.Suit.S),fullDeck.pickSpecificCard(rankValues[4], Card.Suit.C));
 							}} else if (rankCount[3] > 0) { //XXUYZ - 4,3
 								newGames = deck.getNumRankLeft(rankValues[1]) * deck.getNumRankLeft(rankValues[2]) * deck.getNumRankLeft(rankValues[3]);
 								if (newGames!=0 && deck.getNumRankLeft(rankValues[0]) > 1) { //must have at least two of the first value and one of the rest
@@ -437,9 +489,9 @@ public class EquityCalc {
 								//4toflush - all must be available
 								for (Card.Suit s: Card.Suit.values()) {
 									if (s == Card.Suit.C && hasC ==false) continue; //no need to loop if no suited cards in this suit
-									else if(s==Card.Suit.D && hasD==false) continue;
-									else if(s==Card.Suit.H && hasH==false) continue;
-									else if(s==Card.Suit.S && hasS==false) continue;
+									else if(s== Card.Suit.D && hasD==false) continue;
+									else if(s== Card.Suit.H && hasH==false) continue;
+									else if(s== Card.Suit.S && hasS==false) continue;
 									
 
 									for (c=0;c<4;c++) {
@@ -454,9 +506,9 @@ public class EquityCalc {
 								//3 to flush, one empty spot
 								for (Card.Suit s: Card.Suit.values()) {
 									if (s == Card.Suit.C && suitedC==false) continue; //no need to loop if no suited cards in this suit
-									else if(s==Card.Suit.D && suitedD==false) continue;
-									else if(s==Card.Suit.H && suitedH==false) continue;
-									else if(s==Card.Suit.S && suitedS==false) continue;
+									else if(s== Card.Suit.D && suitedD==false) continue;
+									else if(s== Card.Suit.H && suitedH==false) continue;
+									else if(s== Card.Suit.S && suitedS==false) continue;
 									for (cc=0;cc<4;cc++) { //moving offsuit card
 										if (deck.getNumRankLeftNotSuit(rankValues[cc], s)!=0 && (cc!=0 || deck.getNumRankLeftNotSuit(rankValues[cc], s) > 1)) { //in the case of the pair, must check that we have at least 2 cards
 											for (c =0;c<4;c++) { //cycling to check all suited cards
@@ -495,7 +547,7 @@ public class EquityCalc {
 								}
 								//debug
 								//System.out.println(" " + newGames + " P");
-								doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0],Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.D),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.H),fullDeck.pickSpecificCard(rankValues[2],Card.Suit.S),fullDeck.pickSpecificCard(rankValues[3],Card.Suit.C));
+								doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0], Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.D),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.H),fullDeck.pickSpecificCard(rankValues[2], Card.Suit.S),fullDeck.pickSpecificCard(rankValues[3], Card.Suit.C));
 
 								//end debug
 							}} else if (rankCount[2] > 0 && rankCount[0]==3) { //XXXYZ - 3 
@@ -517,16 +569,16 @@ public class EquityCalc {
 									//only need to check for 3 to flush
 									for (Card.Suit s : Card.Suit.values()) {
 										if (s == Card.Suit.C && suitedC==false) continue; //no need to loop if no suited cards in this suit
-										else if(s==Card.Suit.D && suitedD==false) continue;
-										else if(s==Card.Suit.H && suitedH==false) continue;
-										else if(s==Card.Suit.S && suitedS==false) continue;
+										else if(s== Card.Suit.D && suitedD==false) continue;
+										else if(s== Card.Suit.H && suitedH==false) continue;
+										else if(s== Card.Suit.S && suitedS==false) continue;
 										
 										if (deck.containsCard(rankValues[0], s) && deck.containsCard(rankValues[1], s) && deck.containsCard(rankValues[2], s)) {
 											//have 3toflush
 											if (C==1) {newGames--;
-											doFindBestValue(1,deck.pickSpecificCard(rankValues[0],s),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.not(s)),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.not(s)),deck.pickSpecificCard(rankValues[1],s),deck.pickSpecificCard(rankValues[2],s));
+											doFindBestValue(1,deck.pickSpecificCard(rankValues[0],s),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.not(s)),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.not(s)),deck.pickSpecificCard(rankValues[1],s),deck.pickSpecificCard(rankValues[2],s));
 											} else {newGames -= 3;
-											doFindBestValue(3,deck.pickSpecificCard(rankValues[0],s),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.not(s)),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.not(s)),deck.pickSpecificCard(rankValues[1],s),deck.pickSpecificCard(rankValues[2],s));
+											doFindBestValue(3,deck.pickSpecificCard(rankValues[0],s),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.not(s)),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.not(s)),deck.pickSpecificCard(rankValues[1],s),deck.pickSpecificCard(rankValues[2],s));
 											}
 											
 										}
@@ -535,7 +587,7 @@ public class EquityCalc {
 
 									//debug
 									//System.out.println(" " + newGames + " P");
-									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0],Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.D),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.H),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.S),fullDeck.pickSpecificCard(rankValues[2],Card.Suit.C));
+									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0], Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.D),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.H),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.S),fullDeck.pickSpecificCard(rankValues[2], Card.Suit.C));
 	
 									
 								}//end newGames if
@@ -564,22 +616,22 @@ public class EquityCalc {
 									//only need to check for 3 to flush
 									for (Card.Suit s : Card.Suit.values()) {
 										if (s == Card.Suit.C && suitedC==false) continue; //no need to loop if no suited cards in this suit
-										else if(s==Card.Suit.D && suitedD==false) continue;
-										else if(s==Card.Suit.H && suitedH==false) continue;
-										else if(s==Card.Suit.S && suitedS==false) continue;
+										else if(s== Card.Suit.D && suitedD==false) continue;
+										else if(s== Card.Suit.H && suitedH==false) continue;
+										else if(s== Card.Suit.S && suitedS==false) continue;
 										
 										if (deck.containsCard(rankValues[0], s) && deck.containsCard(rankValues[1], s) && deck.containsCard(rankValues[2], s)) {
 											//have 3toflush
 											C = deck.getNumRankLeftNotSuit(rankValues[0], s) * deck.getNumRankLeftNotSuit(rankValues[1], s); //just multiply how many non-flush suit cards we have in the pairs, shouldn't be here if less than 2
 											newGames -= C;
-											doFindBestValue(C,deck.pickSpecificCard(rankValues[0],s),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.not(s)),deck.pickSpecificCard(rankValues[1],s),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.not(s)),deck.pickSpecificCard(rankValues[2],s));
+											doFindBestValue(C,deck.pickSpecificCard(rankValues[0],s),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.not(s)),deck.pickSpecificCard(rankValues[1],s),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.not(s)),deck.pickSpecificCard(rankValues[2],s));
 										}
 										
 									}
 
 									//debug
 									//System.out.println(" " + newGames + " P");
-									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0],Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.D),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.H),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.S),fullDeck.pickSpecificCard(rankValues[2],Card.Suit.C));
+									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0], Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.D),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.H),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.S),fullDeck.pickSpecificCard(rankValues[2], Card.Suit.C));
 									
 								} //end newGames if()
 							} else if (rankCount[0] == 3) { //XXXYY - 0 //never has flushes
@@ -597,7 +649,7 @@ public class EquityCalc {
 								
 								newGames = (C*D);
 								if (newGames!=0) //if 0, must not be enough of one rank to make combo
-									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0],Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.D),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.H),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.S),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.C));
+									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0], Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.D),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.H),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.S),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.C));
 							} else { //XXXXY - 0 //never has flushes
 								switch (deck.getNumRankLeft(rankValues[0])) {
 								case 4: C=1; break;
@@ -605,7 +657,7 @@ public class EquityCalc {
 								}
 								newGames = (C * deck.getNumRankLeft(rankValues[1]));
 								if (newGames != 0) //if 0, must be missing enough ranks to make combo
-									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0],Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.D),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.H),fullDeck.pickSpecificCard(rankValues[0],Card.Suit.S),fullDeck.pickSpecificCard(rankValues[1],Card.Suit.C));
+									doFindBestValue(true,newGames,fullDeck.pickSpecificCard(rankValues[0], Card.Suit.C),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.D),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.H),fullDeck.pickSpecificCard(rankValues[0], Card.Suit.S),fullDeck.pickSpecificCard(rankValues[1], Card.Suit.C));
 							}
 							/* ways of isomorphic by rank:
 							 * XXXXY
@@ -668,7 +720,7 @@ public class EquityCalc {
 	}
 	
 	void doBruteForceEnum() {
-		/* This method  used when we have a board
+		/* This method  used when we have a flop or turn
 		 * Time to cycle through the deck and declare a winner and update numWins[], numTies[], and numGames
 		 * get an array of cards to represent the deck and then cycle through based on the length of board.
 		 * hmm, how to make this efficient without using 3 different loops for pre, flop, and turn? recursion?
@@ -682,7 +734,7 @@ public class EquityCalc {
 
 		cardArray = deck.getDeckArray();
 		Card[] comboArray = new Card[comboL];
-		
+
 		
 		int deckL = cardArray.length;
 		int cc=0; //cc manages deckIterator, ii manages cardArray 
@@ -770,13 +822,13 @@ public class EquityCalc {
 	
 	boolean tie;
 	//debug variables
-	void doFindBestValue(boolean noFlush,int newGames,Card... comboArray) {
+	void doFindBestValue(boolean noFlush, int newGames, Card... comboArray) {
 		/*
 		 * This method expects the following variables to be ready:
 		 * board, iterator[]
 		 * board + comboArray must be 5 cards, can't waste cpu by checking
 		 */
-		if (newGames==0) return; //could happen
+		//if (newGames==0) return; //could happen
 		if (comboArray.length+board.length != 5) {
 			System.out.println("comboArray = " + comboArray.length);
 			throw new IllegalArgumentException("doFindBestValue, comboArray = " + comboArray.length);
@@ -812,7 +864,7 @@ public class EquityCalc {
 	 * @param combo
 	 * @return Hand value from HandValue static class
 	 */
-	private int findHandValue(boolean noFlush, Pocket pocket,Card[] board,Card... combo) {
+	private int findHandValue(boolean noFlush, Pocket pocket, Card[] board, Card... combo) {
 		
 		if (board.length + combo.length != 5)  // TODO: extra calc, remove
 			throw new IllegalArgumentException ("Problem in findHandValue.");

@@ -1,4 +1,4 @@
-package pokerTools;
+package library;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
